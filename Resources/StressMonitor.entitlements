@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Sandbox (Required for App Store) -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    
+    <!-- Allow reading basic user information -->
+    <key>com.apple.security.personal-information.addressbook</key>
+    <false/>
+    
+    <!-- Allow read-only access to file system (for detecting running apps) -->
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <false/>
+    
+    <!-- Network access (not needed for this app) -->
+    <key>com.apple.security.network.client</key>
+    <false/>
+    <key>com.apple.security.network.server</key>
+    <false/>
+    
+    <!-- Automation access (needed to get frontmost app) -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>
