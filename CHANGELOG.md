@@ -7,8 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-25
+
 ### Added
-- Initial release preparation
+- 三级交互悬浮窗口设计
+- 状态日历功能，查看历史每日工作状态
+- 今日应用列表展开/收起功能
+- 应用列表支持点击切换分类
+
+### Changed
+- 重构窗口展开逻辑，使用统一的动画配置
+- 优化窗口宽度动态调整 (200px/300px/340px)
+- 改进 UI 视觉效果和交互体验
+
+### Fixed
+- 修复窗口展开/收起动画闪烁问题
+- 使用 easeInOut 动画替代 spring 动画
+- 添加 clipped() 防止内容溢出
 
 ## [1.0.0] - 2026-03-23
 
@@ -27,5 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **工作应用**: 企业微信、Safari、Chrome、Edge、Firefox、邮件、Outlook、Word、Excel、PowerPoint、Figma、Notion、Slack、Zoom、腾讯会议、Xcode、VS Code、Terminal、iTerm2
 - **娱乐应用**: 微信、QQ、音乐、Spotify、网易云音乐、哔哩哔哩、腾讯视频、优酷、爱奇艺、Steam、Epic Games、微博、知乎、豆瓣
 
-[Unreleased]: https://github.com/YOUR_USERNAME/StressMonitor/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/YOUR_USERNAME/StressMonitor/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Tolsr/StressMonitor/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Tolsr/StressMonitor/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/Tolsr/StressMonitor/releases/tag/v1.0.0
