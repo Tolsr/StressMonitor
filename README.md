@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/platform-macOS%2012.0+-blue" alt="Platform">
   <img src="https://img.shields.io/badge/Swift-5.0-orange" alt="Swift">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/version-2.0.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.0.1-brightgreen" alt="Version">
 </p>
 
 一个原生 macOS 状态栏应用，用于监控你的工作与娱乐时间比例，帮助你管理工作压力。

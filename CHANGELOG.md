@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-03-25
+
+### Changed
+- 代码模块化重构，分为四个清晰的功能层：
+  - **A. 氛围状态展示层 (StatusDisplayLayer)**: 表情大图、状态名称、减压交互
+  - **B. 工作娱乐计时层 (WorkEntertainmentLayer)**: 时间统计、进度条比例
+  - **C. 状态日历层 (CalendarLayer)**: 日历入口、历史记录弹窗
+  - **D. 今日应用层 (AppListLayer)**: 应用列表、分类切换
+- 提升代码可读性和可维护性
+- 添加详细的代码注释和模块说明
+
 ## [2.0.0] - 2026-03-25
 
 ### Added
@@ -42,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **工作应用**: 企业微信、Safari、Chrome、Edge、Firefox、邮件、Outlook、Word、Excel、PowerPoint、Figma、Notion、Slack、Zoom、腾讯会议、Xcode、VS Code、Terminal、iTerm2
 - **娱乐应用**: 微信、QQ、音乐、Spotify、网易云音乐、哔哩哔哩、腾讯视频、优酷、爱奇艺、Steam、Epic Games、微博、知乎、豆瓣
 
-[Unreleased]: https://github.com/Tolsr/StressMonitor/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Tolsr/StressMonitor/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/Tolsr/StressMonitor/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Tolsr/StressMonitor/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Tolsr/StressMonitor/releases/tag/v1.0.0
