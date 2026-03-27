@@ -268,7 +268,7 @@ struct WorkEntertainmentLayer: View {
 // MARK: - ═══════════════════════════════════════════════════════════════
 // MARK: C. 状态日历层 (CalendarLayer)
 // MARK: - ═══════════════════════════════════════════════════════════════
-/// 负责展示：状态日历入口按钮、日历弹窗
+/// 负责展示：状态日历入口按钮、日历弹窗（支持月视图/日视图切换）
 
 struct CalendarLayer: View {
     @EnvironmentObject var stressMonitor: StressMonitor
@@ -303,10 +303,74 @@ struct CalendarLayer: View {
     }
 }
 
+// MARK: 日历视图模式
+enum CalendarViewMode: String {
+    case month = "月"
+    case day = "日"
+}
+
 // MARK: 状态日历视图（弹窗）
 struct CalendarView: View {
     @EnvironmentObject var stressMonitor: StressMonitor
     @Environment(\.dismiss) var dismiss
+    @State private var viewMode: CalendarViewMode = .month
+    @State private var displayedMonth: Date = Date()  // 当前显示的月份
+    @State private var selectedRecord: DailyStatusRecord? = nil  // 月视图中选中的日期
+    
+    private let calendar = Calendar.current
+    private let weekdaySymbols = ["日", "一", "二", "三", "四", "五", "六"]
+    
+    // 根据 dateString 查找记录
+    private func record(for dateString: String) -> DailyStatusRecord? {
+        stressMonitor.statusCalendar.first { $0.dateString == dateString }
+    }
+    
+    // 获取日期字符串
+    private func dateString(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+    
+    // 当月的所有日期格子（含前置空位）
+    private var monthGridItems: [(offset: Int, date: Date?)] {
+        let comps = calendar.dateComponents([.year, .month], from: displayedMonth)
+        guard let firstOfMonth = calendar.date(from: comps),
+              let range = calendar.range(of: .day, in: .month, for: firstOfMonth) else {
+            return []
+        }
+        
+        let firstWeekday = calendar.component(.weekday, from: firstOfMonth) - 1 // 0=Sun
+        
+        var items: [(offset: Int, date: Date?)] = []
+        
+        // 前置空位
+        for i in 0..<firstWeekday {
+            items.append((offset: i, date: nil))
+        }
+        
+        // 实际日期
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: firstOfMonth) {
+                items.append((offset: firstWeekday + day - 1, date: date))
+            }
+        }
+        
+        return items
+    }
+    
+    // 月份标题
+    private var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy年M月"
+        return formatter.string(from: displayedMonth)
+    }
+    
+    // 是否是今天
+    private func isToday(_ date: Date) -> Bool {
+        calendar.isDateInToday(date)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -315,17 +379,20 @@ struct CalendarView: View {
             
             Divider()
             
+            // 视图模式切换
+            viewModePicker
+            
             // 日历内容
-            if stressMonitor.statusCalendar.isEmpty {
-                emptyCalendarView
+            if viewMode == .month {
+                monthView
             } else {
-                calendarListView
+                dayListView
             }
             
             // 今日状态预览
             todayPreview
         }
-        .frame(width: 320, height: 400)
+        .frame(width: 340, height: 480)
         .background(Color(NSColor.windowBackgroundColor))
     }
     
@@ -345,6 +412,173 @@ struct CalendarView: View {
         .padding()
     }
     
+    // MARK: 视图模式选择器
+    private var viewModePicker: some View {
+        HStack {
+            Picker("", selection: $viewMode) {
+                Text("月").tag(CalendarViewMode.month)
+                Text("日").tag(CalendarViewMode.day)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 100)
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 6)
+    }
+    
+    // MARK: ═══ 月视图 ═══
+    private var monthView: some View {
+        VStack(spacing: 8) {
+            // 月份导航
+            monthNavigator
+            
+            // 星期标题
+            weekdayHeader
+            
+            // 日期网格
+            monthGrid
+            
+            // 选中日期的详情
+            if let selected = selectedRecord {
+                selectedDayDetail(record: selected)
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal)
+    }
+    
+    // MARK: 月份导航
+    private var monthNavigator: some View {
+        HStack {
+            Button(action: { changeMonth(by: -1) }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .frame(width: 28, height: 28)
+                    .background(Color.gray.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            
+            Spacer()
+            
+            Text(monthTitle)
+                .font(.system(size: 14, weight: .semibold))
+            
+            Spacer()
+            
+            Button(action: { changeMonth(by: 1) }) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .frame(width: 28, height: 28)
+                    .background(Color.gray.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    // MARK: 星期标题行
+    private var weekdayHeader: some View {
+        HStack(spacing: 0) {
+            ForEach(weekdaySymbols, id: \.self) { symbol in
+                Text(symbol)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+    
+    // MARK: 日期网格
+    private var monthGrid: some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+        
+        return LazyVGrid(columns: columns, spacing: 4) {
+            ForEach(monthGridItems, id: \.offset) { item in
+                if let date = item.date {
+                    let ds = dateString(for: date)
+                    let rec = record(for: ds)
+                    let today = isToday(date)
+                    
+                    CalendarDayCell(
+                        day: calendar.component(.day, from: date),
+                        record: rec,
+                        isToday: today,
+                        isSelected: selectedRecord?.dateString == ds
+                    )
+                    .onTapGesture {
+                        if let rec = rec {
+                            selectedRecord = (selectedRecord?.dateString == ds) ? nil : rec
+                        } else if today {
+                            // 点击今天，显示当前状态
+                            selectedRecord = nil
+                        }
+                    }
+                } else {
+                    // 空位
+                    Color.clear
+                        .frame(height: 36)
+                }
+            }
+        }
+    }
+    
+    // MARK: 选中日期详情
+    private func selectedDayDetail(record: DailyStatusRecord) -> some View {
+        HStack(spacing: 10) {
+            Text(record.finalLevel.emoji)
+                .font(.system(size: 24))
+            
+            VStack(alignment: .leading, spacing: 3) {
+                Text(record.formattedDate + " " + record.weekdayString)
+                    .font(.system(size: 12, weight: .medium))
+                HStack(spacing: 8) {
+                    Text("💼 \(formatShortTime(record.workTime))")
+                        .font(.system(size: 11))
+                    Text("🎮 \(formatShortTime(record.entertainmentTime))")
+                        .font(.system(size: 11))
+                }
+                .foregroundColor(.secondary)
+                
+                if !record.topApps.isEmpty {
+                    Text(record.topApps.joined(separator: " · "))
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .lineLimit(1)
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(10)
+        .background(Color.gray.opacity(0.08))
+        .cornerRadius(10)
+        .padding(.top, 4)
+    }
+    
+    // MARK: ═══ 日视图（列表） ═══
+    private var dayListView: some View {
+        Group {
+            if stressMonitor.statusCalendar.isEmpty {
+                emptyCalendarView
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(stressMonitor.statusCalendar.reversed()) { record in
+                            DayRecordCard(record: record)
+                        }
+                    }
+                    .padding()
+                }
+            }
+        }
+    }
+    
     // MARK: 空状态
     private var emptyCalendarView: some View {
         VStack(spacing: 12) {
@@ -358,18 +592,6 @@ struct CalendarView: View {
                 .foregroundColor(.secondary.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    // MARK: 日历列表
-    private var calendarListView: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                ForEach(stressMonitor.statusCalendar.reversed()) { record in
-                    DayRecordCard(record: record)
-                }
-            }
-            .padding()
-        }
     }
     
     // MARK: 今日预览
@@ -388,6 +610,69 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
+        }
+    }
+    
+    // MARK: 辅助方法
+    private func changeMonth(by value: Int) {
+        if let newMonth = calendar.date(byAdding: .month, value: value, to: displayedMonth) {
+            displayedMonth = newMonth
+            selectedRecord = nil
+        }
+    }
+    
+    private func formatShortTime(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h\(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+}
+
+// MARK: 月视图日期格子
+struct CalendarDayCell: View {
+    let day: Int
+    let record: DailyStatusRecord?
+    let isToday: Bool
+    let isSelected: Bool
+    
+    var body: some View {
+        VStack(spacing: 1) {
+            // 日期数字
+            Text("\(day)")
+                .font(.system(size: 12, weight: isToday ? .bold : .regular))
+                .foregroundColor(isToday ? .white : .primary)
+            
+            // 状态指示点
+            if let rec = record {
+                Text(rec.finalLevel.emoji)
+                    .font(.system(size: 10))
+            } else {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 10, height: 10)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 36)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(cellBackground)
+        )
+    }
+    
+    private var cellBackground: Color {
+        if isSelected {
+            return Color.blue.opacity(0.25)
+        } else if isToday {
+            return Color.blue.opacity(0.6)
+        } else if record != nil {
+            return Color.gray.opacity(0.08)
+        } else {
+            return Color.clear
         }
     }
 }

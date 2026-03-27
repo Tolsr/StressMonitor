@@ -124,6 +124,17 @@ struct DailyStatusRecord: Codable, Identifiable {
         formatter.dateFormat = "EEE"
         return formatter.string(from: date)
     }
+    
+    var dayOfMonth: Int {
+        Calendar.current.component(.day, from: date)
+    }
+    
+    var monthYear: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy年M月"
+        return formatter.string(from: date)
+    }
 }
 
 // MARK: - 压力监控器
@@ -135,7 +146,7 @@ class StressMonitor: ObservableObject {
     @Published var stressReliefClicks: Int = 0
     @Published var appUsageRecords: [String: AppUsageRecord] = [:]
     @Published var customCategories: [String: AppCategory] = [:]
-    @Published var statusCalendar: [DailyStatusRecord] = [] // 状态日历（保留7天）
+    @Published var statusCalendar: [DailyStatusRecord] = [] // 状态日历（保留31天）
     
     // 内部状态
     private var monitorTimer: Timer?
@@ -259,12 +270,15 @@ class StressMonitor: ObservableObject {
             topApps: Array(topApps)
         )
         
+        // 先移除同一天的旧记录（防止重复）
+        statusCalendar.removeAll { $0.dateString == currentDateString }
+        
         // 添加到日历
         statusCalendar.append(record)
         
-        // 只保留最近7天
-        if statusCalendar.count > 7 {
-            statusCalendar.removeFirst(statusCalendar.count - 7)
+        // 只保留最近 31 天（支持月视图）
+        if statusCalendar.count > 31 {
+            statusCalendar.removeFirst(statusCalendar.count - 31)
         }
         
         saveData()
@@ -289,9 +303,19 @@ class StressMonitor: ObservableObject {
         // 加载状态日历
         if let data = defaults.data(forKey: "statusCalendar"),
            let calendar = try? JSONDecoder().decode([DailyStatusRecord].self, from: data) {
-            // 过滤只保留7天内的记录
-            let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-            statusCalendar = calendar.filter { $0.date > sevenDaysAgo }
+            // 过滤只保留 31 天内的记录
+            let thirtyOneDaysAgo = Calendar.current.date(byAdding: .day, value: -31, to: Date()) ?? Date()
+            let filtered = calendar.filter { $0.date > thirtyOneDaysAgo }
+            // 按 dateString 去重，保留每天最后一条记录
+            var seen = Set<String>()
+            var deduped = [DailyStatusRecord]()
+            for record in filtered.reversed() {
+                if !seen.contains(record.dateString) {
+                    seen.insert(record.dateString)
+                    deduped.append(record)
+                }
+            }
+            statusCalendar = deduped.reversed()
         }
         
         // 加载今日统计（检查日期）
@@ -379,6 +403,11 @@ class StressMonitor: ObservableObject {
         saveData()
     }
     
+    // MARK: - 需要排除的系统应用
+    private let excludedApps: Set<String> = [
+        "com.apple.loginwindow",            // 登录窗口
+    ]
+    
     private func checkActiveApp() {
         // 检查是否跨天
         let todayString = getTodayString()
@@ -389,6 +418,12 @@ class StressMonitor: ObservableObject {
         guard let activeApp = NSWorkspace.shared.frontmostApplication,
               let bundleId = activeApp.bundleIdentifier,
               let appName = activeApp.localizedName else {
+            return
+        }
+        
+        // 排除 loginwindow 等系统应用，不统计其使用时间
+        if excludedApps.contains(bundleId) {
+            lastCheckTime = Date()  // 更新检查时间，但不记录使用时间
             return
         }
         

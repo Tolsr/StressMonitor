@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-03-26
+
+### Fixed
+- 修复状态日历同一日期重复出现多条记录的 bug
+- 加载历史数据时增加按 dateString 去重逻辑
+
+### Changed
+- 状态日历支持月视图（默认）和日视图切换
+- 月视图类似 macOS 日历，按月排列日期网格，支持左右切换月份
+- 有记录的日期显示状态表情，点击可查看详情
+- 日历数据保留天数从 7 天扩展到 31 天
+- 排除 loginwindow 系统应用的使用时间统计
+
 ## [2.0.1] - 2026-03-25
 
 ### Changed
@@ -53,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **工作应用**: 企业微信、Safari、Chrome、Edge、Firefox、邮件、Outlook、Word、Excel、PowerPoint、Figma、Notion、Slack、Zoom、腾讯会议、Xcode、VS Code、Terminal、iTerm2
 - **娱乐应用**: 微信、QQ、音乐、Spotify、网易云音乐、哔哩哔哩、腾讯视频、优酷、爱奇艺、Steam、Epic Games、微博、知乎、豆瓣
 
-[Unreleased]: https://github.com/Tolsr/StressMonitor/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/Tolsr/StressMonitor/compare/v2.0.2...HEAD
+[2.0.2]: https://github.com/Tolsr/StressMonitor/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/Tolsr/StressMonitor/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Tolsr/StressMonitor/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Tolsr/StressMonitor/releases/tag/v1.0.0
